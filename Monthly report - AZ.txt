@@ -1,0 +1,3041 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "903a0628-df2f-4a7d-93ac-80fbf48032ec",
+            "version": "KqlParameterItem/1.0",
+            "name": "InternalWSs",
+            "type": 1,
+            "isRequired": true,
+            "query": "where type =~ \"Microsoft.OperationsManagement/solutions\"\r\n| where name startswith \"SecurityInsights\"\r\n| parse id with * '(' WSName ')' *\r\n| take 1\r\n| project WSName",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 2592000000
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "8c7b9fc5-b87f-44d7-9cc8-bec025faf2c2",
+            "version": "KqlParameterItem/1.0",
+            "name": "DefaultSubscription_Internal",
+            "type": 1,
+            "isRequired": true,
+            "query": "where type =~ 'microsoft.operationalinsights/workspaces'\r\n| take 1\r\n| project subscriptionId",
+            "crossComponentResources": [
+              "value::selected"
+            ],
+            "isHiddenWhenLocked": true,
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "f046681a-d502-4370-9a04-736042ed7e47",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscription",
+            "type": 6,
+            "query": "resources\r\n| summarize by subscriptionId\r\n| project value = strcat(\"/subscriptions/\", subscriptionId), label = subscriptionId, selected = iff(subscriptionId =~ '{DefaultSubscription_Internal}', true, false)",
+            "crossComponentResources": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "value": "/subscriptions/7d6ce827-8fa3-4e30-98b4-2d990eebd0a7"
+          },
+          {
+            "id": "ef68dc9e-94e2-47c9-bfc8-8206537418a8",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspace",
+            "type": 5,
+            "query": "//resources\r\n//| where type =~ 'microsoft.operationalinsights/workspaces'\r\n//| project id\r\n\r\nwhere type =~ 'microsoft.operationalinsights/workspaces'\r\n| project value =id, label = name, selected = iff(name =~ '{InternalWSs}', true, false)",
+            "crossComponentResources": [
+              "{Subscription}"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "f9f6427d-1903-4ebc-9c48-86846ec36119",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 2592000000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 5184000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            }
+          },
+          {
+            "id": "ddb7df85-73e6-4a6a-9201-a82c08739c98",
+            "version": "KqlParameterItem/1.0",
+            "name": "investigateBy",
+            "label": "Investigate By",
+            "type": 10,
+            "description": "Investigate Incidents or Entities",
+            "isRequired": true,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "jsonData": "[\r\n { \"value\": \"Incident\", \"label\": \"Incident\", \"selected\":true},\r\n { \"value\": \"Bookmark\", \"label\": \"Bookmark\"},\r\n {\"value\": \"Entity\", \"label\": \"Entity\" }\r\n]\r\n"
+          },
+          {
+            "version": "KqlParameterItem/1.0",
+            "name": "IncidentView",
+            "label": "Show Incident Trend",
+            "type": 10,
+            "description": "Show incident view or not?",
+            "isRequired": true,
+            "query": "datatable(IncidentView:string, InvestigateBy:string)\r\n\t[\"Yes\", \"Incident\",\r\n\t\"No\", \"Incident\"]\r\n| where InvestigateBy =~ \"{investigateBy}\" or IncidentView == \"No\"\r\n| project IncidentView",
+            "crossComponentResources": [
+              "{Workspace}"
+            ],
+            "value": "Yes",
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "timeContext": {
+              "durationMs": 0
+            },
+            "timeContextFromParameter": "TimeRange",
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces",
+            "id": "5c093daf-515c-45be-a1e4-4b14d211c0eb"
+          },
+          {
+            "id": "277da9db-3772-41b9-b24a-f2fe4a886eb4",
+            "version": "KqlParameterItem/1.0",
+            "name": "Tactics",
+            "type": 2,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "SecurityIncident\r\n| extend Tactics = todynamic(AdditionalData.tactics)\r\n| mvexpand Tactics to typeof(string)\r\n| summarize Count=count(IncidentNumber) by Tactics\r\n| project Value = Tactics, Label = strcat(Tactics, \": \", Count)",
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "selectAllValue": "*"
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          },
+          {
+            "id": "b1673aa2-ac59-4a05-8d91-e2a8f55b865e",
+            "version": "KqlParameterItem/1.0",
+            "name": "Severity",
+            "type": 2,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "SecurityIncident\r\n| summarize Count = count(IncidentNumber) by Severity\r\n| project Value = Severity, Label = strcat(Severity, \": \", Count)",
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "selectAllValue": "*"
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          },
+          {
+            "id": "0265b394-bdf6-4fda-af11-fac21e8599d7",
+            "version": "KqlParameterItem/1.0",
+            "name": "Owner",
+            "type": 2,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "SecurityIncident\r\n| extend owner = tostring(Owner.assignedTo) \r\n| summarize Count=count(IncidentNumber) by Owner= case(owner==\"\", \"Unassigned\",owner)\r\n| project Value = Owner, Label = strcat(Owner, \": \", Count)",
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "selectAllValue": "*"
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          },
+          {
+            "id": "14d3afad-15b9-45cf-a838-b276d2841d9f",
+            "version": "KqlParameterItem/1.0",
+            "name": "Product",
+            "label": "Product Name",
+            "type": 2,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "SecurityIncident\r\n| extend Product = tostring(parse_json(tostring(AdditionalData.alertProductNames))[0]) \r\n| summarize Count=count(IncidentNumber) by Product\r\n| project Value = Product, Label = strcat(Product, \": \", Count)\r\n",
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "selectAllValue": "*",
+              "showDefault": false
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          },
+          {
+            "id": "64892795-8c18-40cc-91a0-af960d7c7f18",
+            "version": "KqlParameterItem/1.0",
+            "name": "AlertSeverity",
+            "type": 2,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "SecurityAlert\r\n| summarize Count = count() by AlertSeverity\r\n| order by Count desc, AlertSeverity asc\r\n| project Value = AlertSeverity, Label = strcat(AlertSeverity, ' - ', Count)",
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "selectAllValue": "",
+              "showDefault": false
+            },
+            "timeContext": {
+              "durationMs": 0
+            },
+            "timeContextFromParameter": "TimeRange",
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          }
+        ],
+        "style": "above",
+        "queryType": 0,
+        "resourceType": "microsoft.resourcegraph/resources"
+      },
+      "name": "GlobalParameters"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "### Incident Trending at a Glance\r\n---"
+            },
+            "conditionalVisibilities": [
+              {
+                "parameterName": "IncidentView",
+                "comparison": "isEqualTo",
+                "value": "Yes"
+              },
+              {
+                "parameterName": "investigateBy",
+                "comparison": "isEqualTo",
+                "value": "Incident"
+              }
+            ],
+            "name": "IncidentHeader - Copy"
+          },
+          {
+            "type": 12,
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "items": [
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "// lookup all Severities seen in last month \r\nlet pastMonth = SecurityIncident | where TimeGenerated > startofday(ago(30d)) | summarize by Severity;\r\n SecurityIncident\r\n// lookup Severities from today only\r\n| where TimeGenerated > ago(1d)\r\n| summarize todayCount=count() by Severity\r\n| join kind=fullouter  (pastMonth) on Severity\r\n| join (\r\n SecurityIncident \r\n // from oldest suplied parameter until this time Yesterday \r\n | where TimeGenerated between (startofday({TimeRange:start}) .. ago(1d))\r\n // get avg from oldest date to this time yesterday\r\n | summarize count() by Severity , bin(TimeGenerated,1d)\r\n | summarize historyCount = round(avg(count_),1) by Severity\r\n | extend low  = iif(Severity == \"Low\",\"a\",\"\"),\r\n          med  = iif(Severity == \"Medium\",\"b\",\"\"),\r\n          high = iif(Severity == \"High\",\"c\",\"\"),\r\n          info = iif(Severity == \"Informational\",\"d\",\"\")\r\n ) on $left.Severity1 == $right.Severity\r\n | extend todayCount = iif(isempty(todayCount),0,todayCount)\r\n | extend trendIs = case(\r\n        todayCount > historyCount,\"Trending Up\",\r\n        todayCount == historyCount,\"Equal\",\r\n        todayCount < historyCount,\"Trending Down\",\r\n        Severity2\r\n )\r\n| project Severity2, todayCount, historyCount, trendIs, low, med, high, info\r\n| order by high, med, low, info",
+                          "size": 1,
+                          "title": "Incident Severity Trend - Average count from {TimeRange:label}  vs. Last 24hr Count",
+                          "exportFieldName": "Severity",
+                          "exportParameterName": "Severity",
+                          "exportDefaultValue": "All",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces",
+                          "crossComponentResources": [
+                            "{Workspace}"
+                          ],
+                          "visualization": "tiles",
+                          "gridSettings": {
+                            "sortBy": [
+                              {
+                                "itemKey": "historyCount",
+                                "sortOrder": 2
+                              }
+                            ]
+                          },
+                          "sortBy": [
+                            {
+                              "itemKey": "historyCount",
+                              "sortOrder": 2
+                            }
+                          ],
+                          "tileSettings": {
+                            "titleContent": {
+                              "columnMatch": "Severity2",
+                              "formatter": 1
+                            },
+                            "subtitleContent": {
+                              "columnMatch": "historyCount",
+                              "tooltipFormat": {
+                                "tooltip": "Average Count"
+                              }
+                            },
+                            "leftContent": {
+                              "columnMatch": "trendIs",
+                              "formatter": 18,
+                              "formatOptions": {
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Trending Up",
+                                    "representation": "trendup",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Trending Down",
+                                    "representation": "trenddown",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Equal",
+                                    "representation": "Normal",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "Default",
+                                    "thresholdValue": null,
+                                    "representation": "Blank",
+                                    "text": ""
+                                  }
+                                ]
+                              },
+                              "numberFormat": {
+                                "unit": 17,
+                                "options": {
+                                  "style": "decimal",
+                                  "useGrouping": false
+                                }
+                              }
+                            },
+                            "secondaryContent": {
+                              "columnMatch": "todayCount",
+                              "formatter": 12,
+                              "formatOptions": {
+                                "palette": "blue"
+                              },
+                              "tooltipFormat": {
+                                "tooltip": "Today's Count"
+                              }
+                            },
+                            "showBorder": true
+                          }
+                        },
+                        "customWidth": "59",
+                        "conditionalVisibility": {
+                          "parameterName": "IncidentView",
+                          "comparison": "isEqualTo",
+                          "value": "Yes"
+                        },
+                        "name": "IncidentBySev - Incident Trend "
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "let SortOrder = datatable(Severity:string, SortOrder:int)[\"High\", 1, \"Medium\", 2, \"Low\", 3, \"Informational\", 4,];\r\nSecurityIncident\r\n| join kind=leftouter SortOrder on Severity\r\n| make-series count() on bin(TimeGenerated,1d) from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain}  by Severity\r\n\r\n\r\n",
+                          "size": 1,
+                          "title": "Incident Severity Trend - Average count from {TimeRange:label}  ",
+                          "timeContextFromParameter": "TimeRange",
+                          "exportFieldName": "Severity",
+                          "exportParameterName": "Severity",
+                          "exportDefaultValue": "All",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces",
+                          "crossComponentResources": [
+                            "{Workspace}"
+                          ],
+                          "visualization": "table",
+                          "gridSettings": {
+                            "formatters": [
+                              {
+                                "columnMatch": "count_",
+                                "formatter": 9,
+                                "formatOptions": {
+                                  "palette": "greenRed"
+                                }
+                              },
+                              {
+                                "columnMatch": "TimeGenerated",
+                                "formatter": 5
+                              }
+                            ],
+                            "labelSettings": [
+                              {
+                                "columnId": "count_",
+                                "label": "Trend"
+                              }
+                            ]
+                          },
+                          "sortBy": [],
+                          "tileSettings": {
+                            "titleContent": {
+                              "columnMatch": "Severity2",
+                              "formatter": 1
+                            },
+                            "subtitleContent": {
+                              "columnMatch": "historyCount",
+                              "tooltipFormat": {
+                                "tooltip": "Average Count"
+                              }
+                            },
+                            "leftContent": {
+                              "columnMatch": "trendIs",
+                              "formatter": 18,
+                              "formatOptions": {
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Trending Up",
+                                    "representation": "trendup",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Trending Down",
+                                    "representation": "trenddown",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Equal",
+                                    "representation": "Normal",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "Default",
+                                    "thresholdValue": null,
+                                    "representation": "Blank",
+                                    "text": ""
+                                  }
+                                ]
+                              },
+                              "numberFormat": {
+                                "unit": 17,
+                                "options": {
+                                  "style": "decimal",
+                                  "useGrouping": false
+                                }
+                              }
+                            },
+                            "secondaryContent": {
+                              "columnMatch": "todayCount",
+                              "formatter": 12,
+                              "formatOptions": {
+                                "palette": "blue"
+                              },
+                              "tooltipFormat": {
+                                "tooltip": "Today's Count"
+                              }
+                            },
+                            "showBorder": true
+                          }
+                        },
+                        "customWidth": "39",
+                        "conditionalVisibility": {
+                          "parameterName": "IncidentView",
+                          "comparison": "isEqualTo",
+                          "value": "Yes"
+                        },
+                        "name": "IncidentBySev - Incident Trend  - Copy"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "// lookup all Status states seen in last month \r\nlet pastMonth = SecurityIncident | where TimeGenerated > startofday(ago(30d)) | summarize by Status;\r\n SecurityIncident\r\n// lookup Status states, from today only\r\n| where TimeGenerated > ago(1d)\r\n| summarize todayCount=count() by Status\r\n| join kind=fullouter (pastMonth) on Status\r\n| join (\r\n SecurityIncident \r\n // from oldest suplied parameter until 24hrs ago \r\n | where TimeGenerated between (startofday({TimeRange:start}) .. ago(1d))\r\n // get avg from oldest date to this time yesterday\r\n | summarize count() by Status , bin(TimeGenerated,1d)\r\n | summarize historyCount = round(avg(count_),2) by Status\r\n ) on $left.Status1 == $right.Status\r\n| extend todayCount = iif(isempty(todayCount),0,todayCount)\r\n | extend trendIs = case(\r\n        todayCount > historyCount,\"Trending Up\",\r\n        todayCount == historyCount,\"Equal\",\r\n        todayCount < historyCount,\"Trending Down\",\r\n        Status2\r\n )\r\n| project Status2, todayCount, historyCount, trendIs ",
+                          "size": 1,
+                          "title": "Incident Status Trend - Average count from {TimeRange:label} vs. Last 24hr Count",
+                          "exportFieldName": "Severity",
+                          "exportParameterName": "Severity",
+                          "exportDefaultValue": "All",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces",
+                          "crossComponentResources": [
+                            "{Workspace}"
+                          ],
+                          "visualization": "tiles",
+                          "gridSettings": {
+                            "sortBy": [
+                              {
+                                "itemKey": "historyCount",
+                                "sortOrder": 2
+                              }
+                            ]
+                          },
+                          "sortBy": [
+                            {
+                              "itemKey": "historyCount",
+                              "sortOrder": 2
+                            }
+                          ],
+                          "tileSettings": {
+                            "titleContent": {
+                              "columnMatch": "Status2",
+                              "formatter": 1
+                            },
+                            "subtitleContent": {
+                              "columnMatch": "historyCount",
+                              "tooltipFormat": {
+                                "tooltip": "Average Count"
+                              }
+                            },
+                            "leftContent": {
+                              "columnMatch": "trendIs",
+                              "formatter": 18,
+                              "formatOptions": {
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Trending Up",
+                                    "representation": "trendup",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Trending Down",
+                                    "representation": "trenddown",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Equal",
+                                    "representation": "Normal",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "Default",
+                                    "thresholdValue": null,
+                                    "representation": "Blank",
+                                    "text": ""
+                                  }
+                                ]
+                              },
+                              "numberFormat": {
+                                "unit": 17,
+                                "options": {
+                                  "style": "decimal",
+                                  "useGrouping": false
+                                }
+                              }
+                            },
+                            "secondaryContent": {
+                              "columnMatch": "todayCount",
+                              "formatter": 12,
+                              "formatOptions": {
+                                "palette": "greenRed"
+                              },
+                              "tooltipFormat": {
+                                "tooltip": "Today's Count"
+                              }
+                            },
+                            "showBorder": true
+                          }
+                        },
+                        "customWidth": "59",
+                        "conditionalVisibility": {
+                          "parameterName": "IncidentView",
+                          "comparison": "isEqualTo",
+                          "value": "Yes"
+                        },
+                        "name": "IncidentBySev - Incident Trend  - Copy"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "SecurityIncident\r\n| make-series count() on bin(TimeGenerated,1d) from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain}  by Status\r\n\r\n\r\n",
+                          "size": 1,
+                          "title": "Incident Status Trend - Average count from {TimeRange:label}  ",
+                          "timeContextFromParameter": "TimeRange",
+                          "exportFieldName": "Severity",
+                          "exportParameterName": "Severity",
+                          "exportDefaultValue": "All",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces",
+                          "crossComponentResources": [
+                            "{Workspace}"
+                          ],
+                          "visualization": "table",
+                          "gridSettings": {
+                            "formatters": [
+                              {
+                                "columnMatch": "count_",
+                                "formatter": 9,
+                                "formatOptions": {
+                                  "palette": "greenRed"
+                                }
+                              },
+                              {
+                                "columnMatch": "TimeGenerated",
+                                "formatter": 5
+                              }
+                            ],
+                            "labelSettings": [
+                              {
+                                "columnId": "count_",
+                                "label": "Trend"
+                              }
+                            ]
+                          },
+                          "sortBy": [],
+                          "tileSettings": {
+                            "titleContent": {
+                              "columnMatch": "Severity2",
+                              "formatter": 1
+                            },
+                            "subtitleContent": {
+                              "columnMatch": "historyCount",
+                              "tooltipFormat": {
+                                "tooltip": "Average Count"
+                              }
+                            },
+                            "leftContent": {
+                              "columnMatch": "trendIs",
+                              "formatter": 18,
+                              "formatOptions": {
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Trending Up",
+                                    "representation": "trendup",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Trending Down",
+                                    "representation": "trenddown",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "==",
+                                    "thresholdValue": "Equal",
+                                    "representation": "Normal",
+                                    "text": "{0}{1}"
+                                  },
+                                  {
+                                    "operator": "Default",
+                                    "thresholdValue": null,
+                                    "representation": "Blank",
+                                    "text": ""
+                                  }
+                                ]
+                              },
+                              "numberFormat": {
+                                "unit": 17,
+                                "options": {
+                                  "style": "decimal",
+                                  "useGrouping": false
+                                }
+                              }
+                            },
+                            "secondaryContent": {
+                              "columnMatch": "todayCount",
+                              "formatter": 12,
+                              "formatOptions": {
+                                "palette": "blue"
+                              },
+                              "tooltipFormat": {
+                                "tooltip": "Today's Count"
+                              }
+                            },
+                            "showBorder": true
+                          }
+                        },
+                        "customWidth": "39",
+                        "conditionalVisibility": {
+                          "parameterName": "IncidentView",
+                          "comparison": "isEqualTo",
+                          "value": "Yes"
+                        },
+                        "name": "IncidentBySev - Incident Trend  - Copy - Copy"
+                      }
+                    ]
+                  },
+                  "name": "customGroup"
+                },
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "title": "Security Table Anomalies",
+                    "items": [
+                      {
+                        "type": 9,
+                        "content": {
+                          "version": "KqlParameterItem/1.0",
+                          "parameters": [
+                            {
+                              "id": "a04e32b1-ffbe-47b6-96bf-4d77891fe3d9",
+                              "version": "KqlParameterItem/1.0",
+                              "name": "AnomaliesTimeRange",
+                              "type": 4,
+                              "value": {
+                                "durationMs": 604800000
+                              },
+                              "typeSettings": {
+                                "selectableValues": [
+                                  {
+                                    "durationMs": 172800000
+                                  },
+                                  {
+                                    "durationMs": 259200000
+                                  },
+                                  {
+                                    "durationMs": 604800000
+                                  },
+                                  {
+                                    "durationMs": 1209600000
+                                  },
+                                  {
+                                    "durationMs": 2419200000
+                                  },
+                                  {
+                                    "durationMs": 2592000000
+                                  },
+                                  {
+                                    "durationMs": 5184000000
+                                  },
+                                  {
+                                    "durationMs": 7776000000
+                                  }
+                                ]
+                              },
+                              "timeContext": {
+                                "durationMs": 86400000
+                              }
+                            },
+                            {
+                              "id": "bec01a6d-0c4e-4510-ba14-9297ca422da9",
+                              "version": "KqlParameterItem/1.0",
+                              "name": "SampleInterval",
+                              "type": 2,
+                              "typeSettings": {
+                                "additionalResourceOptions": []
+                              },
+                              "jsonData": "[{ \"value\": \"5m\", \"label\": \"5m\" }, { \"value\": \"1h\", \"label\": \"1h\" }, { \"value\": \"1d\", \"label\": \"1d\" , \"selected\":true }, { \"value\": \"7d\", \"label\": \"7d\" , \"selected\":true },{ \"value\": \"14d\", \"label\": \"14d\"}]",
+                              "timeContext": {
+                                "durationMs": 86400000
+                              },
+                              "value": "1h"
+                            },
+                            {
+                              "id": "345e2087-decb-4751-b800-5bba202d65f7",
+                              "version": "KqlParameterItem/1.0",
+                              "name": "PositiveAlertThreshold",
+                              "type": 1,
+                              "isRequired": true,
+                              "value": "0",
+                              "timeContext": {
+                                "durationMs": 86400000
+                              }
+                            },
+                            {
+                              "id": "8a8384a1-c192-41c5-83e6-57dd59a24bfa",
+                              "version": "KqlParameterItem/1.0",
+                              "name": "NegativeAlertThreshold",
+                              "type": 1,
+                              "isRequired": true,
+                              "value": "0.0",
+                              "timeContext": {
+                                "durationMs": 86400000
+                              }
+                            }
+                          ],
+                          "style": "pills",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces"
+                        },
+                        "name": "parameters - 3"
+                      },
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "### Security Anomalies "
+                        },
+                        "name": "text - 4"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "union withsource=TableName1 SecurityIncident, SecurityAlert, SecurityEvent, CommonSecurityLog, Syslog\r\n| make-series count() on TimeGenerated from {AnomaliesTimeRange:start} to {AnomaliesTimeRange:end} step {SampleInterval:value}  by TableName1\r\n| extend (anomalies, score, baseline) = series_decompose_anomalies(count_, 1.5, 7, 'linefit', 1, 'ctukey', 0.01)\r\n//| where anomalies[-1] == 1 or anomalies[-1] == -1  \r\n| extend Score = score[-1]\r\n| where Score >= {PositiveAlertThreshold:value} or Score <= {NegativeAlertThreshold:value}\r\n| project TableName1, expectedCounts=baseline[-1], actualCount=count_[-1], Score = score[-1]",
+                          "size": 4,
+                          "title": "Security Tables detected anomalies: {AnomaliesTimeRange:label},  step {SampleInterval:value} ",
+                          "timeContext": {
+                            "durationMs": 0
+                          },
+                          "timeContextFromParameter": "AnomaliesTimeRange",
+                          "exportFieldName": "TableName1",
+                          "exportParameterName": "TableName1",
+                          "exportDefaultValue": "All",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces",
+                          "crossComponentResources": [
+                            "{Workspace}"
+                          ],
+                          "gridSettings": {
+                            "formatters": [
+                              {
+                                "columnMatch": "expectedCounts",
+                                "formatter": 0,
+                                "numberFormat": {
+                                  "unit": 0,
+                                  "options": {
+                                    "style": "decimal",
+                                    "useGrouping": false,
+                                    "maximumSignificantDigits": 2
+                                  }
+                                }
+                              },
+                              {
+                                "columnMatch": "actualCount",
+                                "formatter": 0,
+                                "numberFormat": {
+                                  "unit": 0,
+                                  "options": {
+                                    "style": "decimal",
+                                    "maximumSignificantDigits": 2
+                                  }
+                                }
+                              },
+                              {
+                                "columnMatch": "Score",
+                                "formatter": 0,
+                                "numberFormat": {
+                                  "unit": 0,
+                                  "options": {
+                                    "style": "decimal",
+                                    "maximumSignificantDigits": 3
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          "sortBy": []
+                        },
+                        "customWidth": "50",
+                        "name": "query - 2"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "union withsource=TableName1 *\r\n| where TableName1 == '{TableName1}'\r\n| make-series count() on TimeGenerated from {AnomaliesTimeRange:start} to {AnomaliesTimeRange:end} step {SampleInterval:value}\r\n| extend (anomalies, score, baseline) = series_decompose_anomalies(count_, 1.5, 7, 'linefit', 1, 'ctukey', 0.01)\r\n| project-away anomalies, score\r\n",
+                          "size": 1,
+                          "title": "Anomaly graph for the selected table",
+                          "timeContext": {
+                            "durationMs": 604800000
+                          },
+                          "timeContextFromParameter": "AnomaliesTimeRange",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces",
+                          "crossComponentResources": [
+                            "{Workspace}"
+                          ],
+                          "visualization": "timechart"
+                        },
+                        "customWidth": "50",
+                        "name": "query - 4"
+                      }
+                    ]
+                  },
+                  "conditionalVisibility": {
+                    "parameterName": "Hide",
+                    "comparison": "isEqualTo",
+                    "value": "EnableAfterMVP"
+                  },
+                  "name": "group - Security Anomalies"
+                }
+              ]
+            },
+            "conditionalVisibilities": [
+              {
+                "parameterName": "IncidentView",
+                "comparison": "isEqualTo",
+                "value": "Yes"
+              },
+              {
+                "parameterName": "investigateBy",
+                "comparison": "isEqualTo",
+                "value": "Incident"
+              }
+            ],
+            "name": "incidentTrending",
+            "styleSettings": {
+              "showBorder": true
+            }
+          }
+        ],
+        "exportParameters": true
+      },
+      "conditionalVisibility": {
+        "parameterName": "investigateBy",
+        "comparison": "isEqualTo",
+        "value": "Incident"
+      },
+      "name": "IncidentGroup"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "# Security Incidents past 30 days"
+            },
+            "name": "text - 2"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityIncident\r\n| where TimeGenerated >ago(30d)\r\n| summarize count() by Title\r\n| distinct Title, count_\r\n| order by count_ desc",
+              "size": 3,
+              "showAnalytics": true,
+              "timeContextFromParameter": "TimeRange",
+              "showRefreshButton": true,
+              "showExportToExcel": true,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart",
+              "tileSettings": {
+                "showBorder": false,
+                "titleContent": {
+                  "columnMatch": "Title",
+                  "formatter": 1
+                },
+                "leftContent": {
+                  "columnMatch": "count_",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "maximumSignificantDigits": 3,
+                      "maximumFractionDigits": 2
+                    }
+                  }
+                }
+              },
+              "graphSettings": {
+                "type": 0,
+                "topContent": {
+                  "columnMatch": "Title",
+                  "formatter": 1
+                },
+                "centerContent": {
+                  "columnMatch": "count_",
+                  "formatter": 1,
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "maximumSignificantDigits": 3,
+                      "maximumFractionDigits": 2
+                    }
+                  }
+                }
+              },
+              "chartSettings": {
+                "yAxis": [
+                  "count_"
+                ],
+                "showMetrics": false,
+                "xSettings": {
+                  "numberFormatSettings": {
+                    "unit": 0,
+                    "options": {
+                      "style": "decimal",
+                      "useGrouping": false
+                    }
+                  }
+                }
+              }
+            },
+            "customWidth": "70",
+            "name": "Security Incidents"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityIncident\r\n| where TimeGenerated >ago(30d)\r\n| summarize count() by Title\r\n| distinct Title, count_\r\n| order by count_ desc",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table"
+            },
+            "customWidth": "30",
+            "name": "query - 16"
+          },
+          {
+            "type": 12,
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SecurityIncident\n| where CreatedTime >= {TimeRange:start} and CreatedTime <= {TimeRange:end}\n| where Status == 'Closed'\n| where Severity in ({Severity}) or \"*\" in ({Severity})\n| extend Tactics = todynamic(AdditionalData.tactics)\n| where Tactics in ({Tactics}) or \"*\" in ({Tactics})\n| extend Owner = todynamic(Owner.assignedTo) \n| where Owner in ({Owner}) or \"*\" in ({Owner})\n| extend Product = todynamic((parse_json(tostring(AdditionalData.alertProductNames))[0])) \n| where Product in ({Product}) or \"*\" in ({Product})\n| extend feedback =strcat(Classification,\" \",ClassificationReason)\n| summarize dcount(IncidentNumber) by feedback\n",
+                    "size": 3,
+                    "title": "Incidents by closing classification",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{Workspace}"
+                    ],
+                    "visualization": "piechart"
+                  },
+                  "customWidth": "40",
+                  "name": "Incidents by classification - headline"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "union *\r\n| summarize count() by bin(TimeGenerated, 1m), Type\r\n| extend counttemp =count_ / 60\r\n| summarize ['Average EPS'] = avg(counttemp), ['Minimum EPS']=min (counttemp),\r\n['Maximum EPS']=max(counttemp)",
+                    "size": 3,
+                    "title": "Average EPS Past 30 days",
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "visualization": "tiles",
+                    "tileSettings": {
+                      "titleContent": {
+                        "columnMatch": "Average EPS",
+                        "formatter": 1,
+                        "numberFormat": {
+                          "unit": 0,
+                          "options": {
+                            "style": "decimal",
+                            "maximumFractionDigits": 1
+                          }
+                        }
+                      },
+                      "showBorder": true
+                    }
+                  },
+                  "customWidth": "24",
+                  "name": "query - 1"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SecurityIncident\r\n| summarize arg_max(TimeGenerated, *) by IncidentNumber\r\n| count",
+                    "size": 3,
+                    "title": "Incidents created past 30 days",
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "visualization": "tiles",
+                    "tileSettings": {
+                      "titleContent": {
+                        "columnMatch": "Count",
+                        "formatter": 18,
+                        "formatOptions": {
+                          "thresholdsOptions": "icons",
+                          "thresholdsGrid": [
+                            {
+                              "operator": "Default",
+                              "thresholdValue": null,
+                              "representation": "warning",
+                              "text": "{0}{1}"
+                            }
+                          ]
+                        }
+                      },
+                      "showBorder": false
+                    }
+                  },
+                  "customWidth": "24",
+                  "name": "query - 2"
+                }
+              ]
+            },
+            "customWidth": "50",
+            "name": "group - 7"
+          },
+          {
+            "type": 12,
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SecurityIncident\n| where FirstModifiedTime  >= {TimeRange:start} and FirstModifiedTime  <= {TimeRange:end}\n| where Severity in ({Severity}) or \"*\" in ({Severity})\n| extend Tactics = todynamic(AdditionalData.tactics)\n| where Tactics in ({Tactics}) or \"*\" in ({Tactics})\n| extend Owner = todynamic(Owner.assignedTo) \n| where Owner in ({Owner}) or \"*\" in ({Owner})\n| extend Product = todynamic((parse_json(tostring(AdditionalData.alertProductNames))[0])) \n| where Product in ({Product}) or \"*\" in ({Product})\n| summarize arg_max(LastModifiedTime,*) by IncidentNumber \n| extend TimeToTriage =  (FirstModifiedTime - CreatedTime)/1h\n| summarize 50th_Percentile=percentile(TimeToTriage, 50) \n",
+                    "size": 3,
+                    "title": "Mean time to detect",
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{Workspace}"
+                    ],
+                    "visualization": "tiles",
+                    "tileSettings": {
+                      "titleContent": {
+                        "formatter": 1
+                      },
+                      "leftContent": {
+                        "columnMatch": "50th_Percentile",
+                        "formatter": 12,
+                        "formatOptions": {
+                          "palette": "auto"
+                        },
+                        "numberFormat": {
+                          "unit": 26,
+                          "options": {
+                            "style": "decimal",
+                            "useGrouping": false,
+                            "maximumFractionDigits": 3
+                          }
+                        }
+                      },
+                      "showBorder": false,
+                      "size": "auto"
+                    }
+                  },
+                  "customWidth": "50",
+                  "name": "MTTD"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SecurityIncident\n| where ClosedTime >= {TimeRange:start} and ClosedTime <= {TimeRange:end}\n| where Severity in ({Severity}) or \"*\" in ({Severity})\n| extend Tactics = todynamic(AdditionalData.tactics)\n| where Tactics in ({Tactics}) or \"*\" in ({Tactics})\n| extend Owner = todynamic(Owner.assignedTo) \n| where Owner in ({Owner}) or \"*\" in ({Owner})\n| extend Product = todynamic((parse_json(tostring(AdditionalData.alertProductNames))[0])) \n| where Product in ({Product}) or \"*\" in ({Product})\n| summarize arg_max(TimeGenerated,*) by IncidentNumber \n| extend TimeToClosure =  (ClosedTime - CreatedTime)/1h\n| summarize 50th_Percentile=percentile(TimeToClosure, 50)",
+                    "size": 3,
+                    "title": "Mean time to resolve",
+                    "timeContext": {
+                      "durationMs": 94608000000,
+                      "endTime": "2023-06-01T16:33:00.000Z"
+                    },
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{Workspace}"
+                    ],
+                    "visualization": "tiles",
+                    "sortBy": [],
+                    "tileSettings": {
+                      "titleContent": {
+                        "columnMatch": "Classification",
+                        "formatter": 1,
+                        "formatOptions": {}
+                      },
+                      "leftContent": {
+                        "columnMatch": "50th_Percentile",
+                        "formatter": 12,
+                        "formatOptions": {
+                          "palette": "auto"
+                        },
+                        "numberFormat": {
+                          "unit": 26,
+                          "options": {
+                            "style": "decimal",
+                            "useGrouping": false,
+                            "maximumFractionDigits": 3
+                          }
+                        }
+                      },
+                      "showBorder": false,
+                      "size": "auto"
+                    }
+                  },
+                  "customWidth": "50",
+                  "name": "MTTR"
+                }
+              ]
+            },
+            "customWidth": "50",
+            "name": "group - 6",
+            "styleSettings": {
+              "margin": "125px",
+              "padding": "0px"
+            }
+          }
+        ]
+      },
+      "name": "Security Incidents",
+      "styleSettings": {
+        "showBorder": true
+      }
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## Incidents created by tactics over time "
+            },
+            "name": "text - 2 - Copy - Copy - Copy - Copy"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityIncident \n| where CreatedTime >= {TimeRange:start} and CreatedTime <= {TimeRange:end}\n| where Severity in ({Severity}) or \"*\" in ({Severity})\n| extend Tactics = todynamic(AdditionalData.tactics)\n| where Tactics in ({Tactics}) or \"*\" in ({Tactics})\n| extend Owner = todynamic(Owner.assignedTo) \n| where Owner in ({Owner}) or \"*\" in ({Owner})\n| extend Product = todynamic((parse_json(tostring(AdditionalData.alertProductNames))[0])) \n| where Product in ({Product}) or \"*\" in ({Product})\n| mvexpand Tactics to typeof(string)\n| summarize Incidents=dcount(IncidentNumber) by Tactics, bin(CreatedTime, 1d)",
+              "size": 1,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "visualization": "unstackedbar"
+            },
+            "name": "query - 2 - Copy - Copy - Copy - Copy"
+          }
+        ]
+      },
+      "name": "group - 9"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "ccd5adcd-8d59-4cfe-99ec-98075de2e253",
+            "version": "KqlParameterItem/1.0",
+            "name": "DefaultSubscription_Internal",
+            "type": 1,
+            "isRequired": true,
+            "query": "where type =~ 'microsoft.operationalinsights/workspaces'\r\n| take 1\r\n| project subscriptionId",
+            "crossComponentResources": [
+              "value::selected"
+            ],
+            "isHiddenWhenLocked": true,
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "1ca69445-60fc-4806-b43d-ac7e6aad630a",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscription",
+            "type": 6,
+            "query": "summarize by subscriptionId\r\n| project value = strcat(\"/subscriptions/\", subscriptionId), label = subscriptionId, selected = iff(subscriptionId =~ '{DefaultSubscription_Internal}', true, false)\r\n",
+            "crossComponentResources": [
+              "value::selected"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "value": "/subscriptions/7d6ce827-8fa3-4e30-98b4-2d990eebd0a7"
+          },
+          {
+            "id": "e94aafa3-c5d9-4523-89f0-4e87aa754511",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspace",
+            "type": 5,
+            "query": "where type =~ 'microsoft.operationalinsights/workspaces'\n| project id",
+            "crossComponentResources": [
+              "{Subscription}"
+            ],
+            "value": "/subscriptions/7d6ce827-8fa3-4e30-98b4-2d990eebd0a7/resourceGroups/rg-uks-mgmt-sec/providers/Microsoft.OperationalInsights/workspaces/log-uks-mgmt-sentinel",
+            "typeSettings": {
+              "resourceTypeFilter": {
+                "microsoft.operationalinsights/workspaces": true
+              },
+              "additionalResourceOptions": []
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "eafaa0ec-7c3a-4ee5-babe-9850080c909d",
+            "version": "KqlParameterItem/1.0",
+            "name": "resourceGroup",
+            "type": 1,
+            "query": "resources\r\n| where type =~ 'microsoft.operationalinsights/workspaces'\r\n| where id == \"{Workspace}\"\r\n| project resourceGroup",
+            "crossComponentResources": [
+              "value::selected"
+            ],
+            "isHiddenWhenLocked": true,
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "c4b69c01-2263-4ada-8d9c-43433b739ff3",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "value": {
+              "durationMs": 2592000000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 5184000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ],
+              "allowCustom": true
+            }
+          },
+          {
+            "id": "27308a9d-46a2-4fca-8035-e813201fb4f8",
+            "version": "KqlParameterItem/1.0",
+            "name": "GiBperday",
+            "type": 1,
+            "query": "union withsource = tt *\r\n| where TimeGenerated > startofday({TimeRange:start}) and TimeGenerated < startofday({TimeRange:end})\r\n// Only look at chargeable Tables\r\n| where _IsBillable == True\r\n| summarize\r\nTotalGBytes =round(sum(_BilledSize/(1024*1024*1024)),2)\r\nby bin(TimeGenerated, 1d)//, Solution=tt\r\n| summarize round(avg(TotalGBytes),2)\r\n",
+            "crossComponentResources": [
+              "{Workspace}"
+            ],
+            "isHiddenWhenLocked": true,
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          },
+          {
+            "id": "c71f3009-a3f4-4aa5-aaf0-d0f667100e56",
+            "version": "KqlParameterItem/1.0",
+            "name": "Help",
+            "label": "Show Help",
+            "type": 10,
+            "description": "This will show some help information to help you understand the page you are on",
+            "isRequired": true,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "jsonData": "[{ \"value\": \"Yes\", \"label\": \"Yes\"},\r\n {\"value\": \"No\", \"label\": \"No\", \"selected\":true }]"
+          }
+        ],
+        "style": "above",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "customWidth": "50",
+      "name": "parameters - 1"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "ab7d6c51-d7df-436c-96a2-429163aa50ec",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 2592000000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 5184000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ],
+              "allowCustom": true
+            }
+          },
+          {
+            "id": "add90eb3-ff5f-4b19-9658-ff15c8043af5",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspaces",
+            "type": 5,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "where type =~ 'microsoft.operationalinsights/workspaces'\r\n| project id, name\r\n| order by name desc",
+            "crossComponentResources": [
+              "value::selected"
+            ],
+            "value": [
+              "value::100"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::100"
+              ]
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "5084e141-6c56-4d7f-bd8a-09f7ef9af1bc",
+            "version": "KqlParameterItem/1.0",
+            "name": "Resource",
+            "label": "Azure Firewalls",
+            "type": 5,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "where type =~ 'Microsoft.Network/azureFirewalls'\r\n| project id, name",
+            "crossComponentResources": [
+              "value::selected"
+            ],
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ]
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "13d9f6e9-9290-4b1e-b0d0-a7c0ebdc1aed",
+            "version": "KqlParameterItem/1.0",
+            "name": "Help",
+            "label": "Show Help",
+            "type": 10,
+            "description": "This will show some help information to help you understand the page you are on",
+            "isRequired": true,
+            "typeSettings": {
+              "additionalResourceOptions": []
+            },
+            "jsonData": "[\r\n { \"value\": \"Yes\", \"label\": \"Yes\"},\r\n {\"value\": \"No\", \"label\": \"No\", \"selected\":true },\r\n { \"value\": \"Change Log\", \"label\": \"Change Log\"}\r\n]"
+          },
+          {
+            "id": "68f2cb32-03d4-4307-8eb5-1f66dfc09a85",
+            "version": "KqlParameterItem/1.0",
+            "name": "FirewallResources",
+            "label": "Show Resources",
+            "type": 2,
+            "description": "The is only used on the Overview page.",
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "jsonData": "[\r\n { \"value\": \"Yes\", \"label\": \"Yes\", \"selected\":true},\r\n {\"value\": \"No\", \"label\": \"No\" }\r\n]",
+            "value": "No"
+          },
+          {
+            "id": "53aa8daf-29de-40a1-9147-c0970e32fac4",
+            "version": "KqlParameterItem/1.0",
+            "name": "GeoLocation",
+            "label": "GeoLocationCSV",
+            "type": 2,
+            "description": "Supplied as a value for GeoLocation lookup on queries: Read more here - https://docs.microsoft.com/azure/data-explorer/kusto/query/ipv4-lookup-plugin#ipv4-lookup---matching-rows-only",
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "jsonData": "\r\n[\r\n{\r\n\"value\": \"https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv\", \"label\": \"GeoLocationDefault\", \"selected\": \"true\"  \r\n}\r\n]\r\n\r\n"
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "customWidth": "50",
+      "name": "parameters - 1"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 9,
+            "content": {
+              "version": "KqlParameterItem/1.0",
+              "parameters": [
+                {
+                  "id": "9aec751b-07bd-43ba-80b9-f711887dce45",
+                  "version": "KqlParameterItem/1.0",
+                  "name": "Indicator",
+                  "label": "Indicator Search",
+                  "type": 1,
+                  "value": "",
+                  "timeContext": {
+                    "durationMs": 7776000000
+                  },
+                  "timeContextFromParameter": "TimeRange"
+                }
+              ],
+              "style": "pills",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces"
+            },
+            "customWidth": "50",
+            "name": "Threat Research Parameters"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": ""
+            },
+            "customWidth": "50",
+            "name": "text - 9"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let tiObservables = ThreatIntelligenceIndicator\r\n    | where TimeGenerated < now()\r\n    | project IndicatorId, ThreatType, Description, Active, IndicatorTime = TimeGenerated, Indicator = strcat(NetworkSourceIP, NetworkIP, NetworkDestinationIP, Url, FileHashValue, EmailSourceIpAddress, EmailSenderAddress, DomainName), SourceSystem;\r\nlet alertEntity = SecurityAlert \r\n    | project parse_json(Entities), SystemAlertId , AlertTime = TimeGenerated\r\n    | mvexpand(Entities)\r\n    | extend entity = iif(isnotempty(Entities.Address), Entities.Address,\r\n                      iif(isnotempty(Entities.HostName),strcat(Entities.HostName, \".\", Entities.DnsDomain),\r\n                      iif(isnotempty(Entities.Url), Entities.Url,\r\n                      iif(isnotempty(Entities.Value), Entities.Value,\r\n                      iif(Entities.Type == \"account\", strcat(Entities.Name,\"@\",Entities.UPNSuffix),\"\")))))\r\n    | where isnotempty(entity) \r\n    | project entity, SystemAlertId, AlertTime;\r\nlet IncidentAlerts = SecurityIncident\r\n    | project IncidentTime = TimeGenerated, IncidentNumber, Title, parse_json(AlertIds)\r\n    | mv-expand AlertIds\r\n    | project IncidentTime, IncidentNumber, Title, tostring(AlertIds);\r\nlet AlertsWithTiObservables = alertEntity\r\n    | join kind=inner tiObservables on $left.entity == $right.Indicator;\r\nlet IncidentsWithAlertsWithTiObservables = AlertsWithTiObservables\r\n    | join kind=inner IncidentAlerts on $left.SystemAlertId == $right.AlertIds;\r\nIncidentsWithAlertsWithTiObservables\r\n| where Indicator contains '{Indicator}' or Indicator == \"*\"\r\n| summarize Incidents=dcount(IncidentNumber), Alerts=dcount(SystemAlertId) by Indicator, ThreatType, Description, Source = SourceSystem\r\n| sort by Incidents desc",
+              "size": 0,
+              "title": "✳️ Incident and Alert Counts by Indicator",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "ThreatType",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Botnet",
+                          "representation": "Command and Control",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "MaliciousUrl",
+                          "representation": "Initial_Access",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Malware",
+                          "representation": "Execution",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Phishing",
+                          "representation": "Exfiltration",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "Pre attack",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Incidents",
+                    "formatter": 4,
+                    "formatOptions": {
+                      "palette": "redBright"
+                    }
+                  },
+                  {
+                    "columnMatch": "Alerts",
+                    "formatter": 4,
+                    "formatOptions": {
+                      "palette": "orange"
+                    }
+                  }
+                ],
+                "filter": true
+              }
+            },
+            "customWidth": "50",
+            "name": "query - 13 - Copy"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let tiObservables = ThreatIntelligenceIndicator \r\n    | where TimeGenerated < now() \r\n    | project IndicatorId, Active, SourceSystem, IndicatorTime = TimeGenerated , Indicator = strcat(NetworkSourceIP, NetworkIP, NetworkDestinationIP, Url, FileHashValue, EmailSourceIpAddress, EmailSenderAddress, DomainName)\r\n    | summarize arg_min(IndicatorTime, *) by IndicatorId;\r\n// Create a temp table containing all alerts generated from threat intelligence.\r\nlet alertEntity = SecurityAlert \r\n    | where TimeGenerated < now()\r\n    | project parse_json(Entities), SystemAlertId , AlertTime = TimeGenerated\r\n    | mv-expand Entities\r\n    | extend Indicator = iif((isnotempty(Entities.Address)), Entities.Address,\r\n                      iif(isnotempty(Entities.HostName),strcat(Entities.HostName, '.', Entities.DnsDomain),\r\n                      iif(isnotempty(Entities.Url), Entities.Url,\r\n                      iif(isnotempty(Entities.Value), Entities.Value,\r\n                      iif(Entities.Type == 'account', strcat(Entities.Name,'@',Entities.UPNSuffix),'')))))\r\n    | where isnotempty(Indicator)\r\n    | project Indicator, SystemAlertId, AlertTime;\r\n// Join the two temp tables and summarize the data in a table showing indicator sources by detection time and count of alerts.\r\nalertEntity \r\n| join kind = inner tiObservables on $left.Indicator == $right.Indicator\r\n| where Indicator contains '{Indicator}' or Indicator == \"*\"\r\n| project SystemAlertId, IndicatorId, timedelta = AlertTime - IndicatorTime, SourceSystem\r\n| summarize DetectionTime=case(toint(avg(timedelta))>0,strcat(replace(@'\\-',@'',replace(@'(\\:\\d+\\:\\d+\\.\\d+)',@'',tostring(avg(timedelta)))),' hrs',' DELAYED'),toint(avg(timedelta))<0,strcat(replace(@'\\-',@'',replace(@'(\\:\\d+\\:\\d+\\.\\d+)',@'',tostring(avg(timedelta)))),' hrs',' AHEAD'), 'None'), Alerts = dcount(SystemAlertId) by Source = SourceSystem\r\n| order by Source asc\r\n| render table",
+              "size": 0,
+              "showAnalytics": true,
+              "title": "✳️ Average Detection Time by Source",
+              "showExportToExcel": true,
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspace}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Source",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "View",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "DetectionTime",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "colors",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "contains",
+                          "thresholdValue": "AHEAD",
+                          "representation": "green",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "contains",
+                          "thresholdValue": "DELAYED",
+                          "representation": "redBright",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "blue",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Alerts",
+                    "formatter": 4,
+                    "formatOptions": {
+                      "palette": "orange"
+                    }
+                  }
+                ],
+                "filter": true
+              },
+              "sortBy": [],
+              "graphSettings": {
+                "type": 0,
+                "topContent": {
+                  "columnMatch": "Source",
+                  "formatter": 1
+                },
+                "centerContent": {
+                  "columnMatch": "Alerts",
+                  "formatter": 1,
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "maximumSignificantDigits": 3,
+                      "maximumFractionDigits": 2
+                    }
+                  }
+                }
+              }
+            },
+            "customWidth": "50",
+            "name": "query - 15"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "TAB",
+        "comparison": "isEqualTo",
+        "value": "ThreatHunting"
+      },
+      "name": "Threat Hunting"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllInboundTraffic = AzureDiagnostics\r\n| where type_s == \"block\"\r\n| where direction_s has \"In\"\r\n| summarize Count=count() by primaryIPv4Address_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllInboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllInboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions);",
+              "size": 0,
+              "title": "Inbound Firewall Denies",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "categoricalbar"
+            },
+            "customWidth": "40",
+            "name": "query - 8",
+            "styleSettings": {
+              "margin": "0"
+            }
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllInboundTraffic = AzureDiagnostics\r\n| where type_s == \"block\"\r\n| where direction_s has \"In\"\r\n| summarize Count=count() by primaryIPv4Address_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllInboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllInboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions);",
+              "size": 3,
+              "title": "Inbound Firewall Denies",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Count",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "purpleDark"
+                    }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "primaryIPv4Address_s",
+                    "label": "Source"
+                  }
+                ]
+              },
+              "sortBy": [],
+              "graphSettings": {
+                "type": 0,
+                "topContent": {
+                  "columnMatch": "Action_s",
+                  "formatter": 1
+                },
+                "centerContent": {
+                  "columnMatch": "count_",
+                  "formatter": 1,
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "maximumSignificantDigits": 3,
+                      "maximumFractionDigits": 2
+                    }
+                  }
+                }
+              },
+              "chartSettings": {
+                "yAxis": [
+                  "count_"
+                ],
+                "showLegend": true,
+                "ySettings": {
+                  "numberFormatSettings": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal",
+                      "useGrouping": true
+                    }
+                  }
+                }
+              }
+            },
+            "customWidth": "30",
+            "name": "query - 1"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllInboundTraffic = AzureDiagnostics\r\n| where type_s == \"block\"\r\n| where direction_s has \"In\"\r\n| summarize Count=count() by primaryIPv4Address_s, ruleName_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllInboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllInboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions)\r\n| sort by ruleName_s desc",
+              "size": 0,
+              "title": "Inbound Firewall Denies by Rules",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Count",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "purpleDark"
+                    }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "primaryIPv4Address_s",
+                    "label": "Source"
+                  },
+                  {
+                    "columnId": "ruleName_s",
+                    "label": "Rule Name"
+                  }
+                ]
+              }
+            },
+            "customWidth": "30",
+            "name": "query - 5"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllOutboundTraffic = AzureDiagnostics\r\n| where type_s == \"block\"\r\n| where direction_s has \"Out\"\r\n| summarize Count=count() by primaryIPv4Address_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllOutboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllOutboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions);",
+              "size": 0,
+              "title": "Outbound Firewall Denies",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "categoricalbar"
+            },
+            "customWidth": "40",
+            "name": "query - 9"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllOutboundTraffic = AzureDiagnostics\r\n| where type_s == \"block\"\r\n| where direction_s has \"Out\"\r\n| summarize Count=count() by primaryIPv4Address_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllOutboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllOutboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions);",
+              "size": 0,
+              "title": "Outbound denies",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Count",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "purpleDark"
+                    }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "primaryIPv4Address_s",
+                    "label": "Source"
+                  }
+                ]
+              }
+            },
+            "customWidth": "30",
+            "name": "query - 4"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllOutboundTraffic = AzureDiagnostics\r\n| where type_s == \"block\"\r\n| where direction_s has \"Out\"\r\n| summarize Count=count() by primaryIPv4Address_s, ruleName_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllOutboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllOutboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions)\r\n| sort by ruleName_s desc",
+              "size": 0,
+              "title": "Outbound Denies by Rule",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Count",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "purpleDark"
+                    }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "primaryIPv4Address_s",
+                    "label": "Source"
+                  },
+                  {
+                    "columnId": "ruleName_s",
+                    "label": "Rule Name"
+                  }
+                ]
+              }
+            },
+            "customWidth": "30",
+            "name": "query - 6"
+          }
+        ]
+      },
+      "name": "group - 17",
+      "styleSettings": {
+        "showBorder": true
+      }
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllOutboundTraffic = AzureDiagnostics\r\n| where type_s == \"allow\"\r\n| where direction_s has \"Out\"\r\n| summarize Count=count() by primaryIPv4Address_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllOutboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllOutboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions);",
+              "size": 0,
+              "title": "Outbound Firewall Allowed",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart"
+            },
+            "customWidth": "40",
+            "name": "query - 10"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllOutboundTraffic = AzureDiagnostics\r\n| where type_s == \"allow\"\r\n| where direction_s has \"Out\"\r\n| summarize Count=count() by primaryIPv4Address_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllOutboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllOutboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions);\r\n",
+              "size": 0,
+              "title": "Outbound allowed",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Count",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "purpleDark"
+                    }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "primaryIPv4Address_s",
+                    "label": "Source"
+                  }
+                ]
+              }
+            },
+            "customWidth": "30",
+            "name": "query - 5"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllOutboundTraffic = AzureDiagnostics\r\n| where type_s == \"allow\"\r\n| where direction_s has \"Out\"\r\n| summarize Count=count() by primaryIPv4Address_s, ruleName_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllOutboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllOutboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions)\r\n| sort by ruleName_s desc",
+              "size": 0,
+              "title": "Outbound Allowed by Rule",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Count",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "purpleDark"
+                    }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "primaryIPv4Address_s",
+                    "label": "Source"
+                  },
+                  {
+                    "columnId": "ruleName_s",
+                    "label": "Rule Name"
+                  }
+                ]
+              }
+            },
+            "customWidth": "30",
+            "name": "query - 4"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllInboundTraffic = AzureDiagnostics\r\n| where type_s == \"allow\"\r\n| where direction_s has \"In\"\r\n| summarize Count=count() by primaryIPv4Address_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllInboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllInboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions);",
+              "size": 0,
+              "title": "Inbound Firewall Allowed",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart"
+            },
+            "customWidth": "40",
+            "name": "query - 11"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllInboundTraffic = AzureDiagnostics\r\n| where type_s == \"allow\"\r\n| where direction_s has \"In\"\r\n| summarize Count=count() by primaryIPv4Address_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllInboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllInboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions);\r\n",
+              "size": 0,
+              "title": "Inbound allowed",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Count",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "purpleDark"
+                    }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "primaryIPv4Address_s",
+                    "label": "Source"
+                  }
+                ]
+              }
+            },
+            "customWidth": "30",
+            "name": "query - 7"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "//Grab all traffic based on source IP being RFC1918\r\nlet AllInboundTraffic = AzureDiagnostics\r\n| where type_s == \"allow\"\r\n| where direction_s has \"In\"\r\n| summarize Count=count() by primaryIPv4Address_s, ruleName_s;\r\n// Sum together the number of sessions total, ForceJoin is for calculation further down\r\nlet TotalSessions = AllInboundTraffic\r\n| summarize TotalSessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// Grab only the top 10 destinations\r\nlet Top10 = AllInboundTraffic\r\n| top 10 by Count;\r\n// Sum together the number of sessions in the Top 10, ForceJoin is for calculation further down\r\nlet Top10Sessions = Top10\r\n| summarize Top10Sessions=sum(Count)\r\n| extend ForceJoin = 'Join';\r\n// List the top 10 but also union with the calculation of the residue\r\nTop10\r\n| union (Top10Sessions\r\n| join kind=inner TotalSessions on ForceJoin\r\n| project primaryIPv4Address_s = 'Other', Count = TotalSessions - Top10Sessions)\r\n| sort by ruleName_s desc",
+              "size": 0,
+              "title": "Inbound Allowed by Rules",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Count",
+                    "formatter": 8,
+                    "formatOptions": {
+                      "palette": "purpleDark"
+                    }
+                  }
+                ],
+                "labelSettings": [
+                  {
+                    "columnId": "primaryIPv4Address_s",
+                    "label": "Source"
+                  },
+                  {
+                    "columnId": "ruleName_s",
+                    "label": "Rule Name"
+                  }
+                ]
+              }
+            },
+            "customWidth": "30",
+            "name": "query - 5"
+          }
+        ]
+      },
+      "name": "group - 16",
+      "styleSettings": {
+        "showBorder": true
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let group1 = AzureDiagnostics\r\n    | where Category has \"AzureFirewallDnsProxy\"\r\n    | where msg_s has \"Error\" or msg_s has \"timeout\"\r\n    | parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePort \" to \" DestinationIP \":\" DestinationPort \". Action: \" Action \". Policy:\" Policy \". Rule Collection Group:\" RuleCollectionGroup \". Rule Collection: \" RuleCollection \". Rule Name: \" Rule;\r\nlet group2 = AzureDiagnostics\r\n    | where Category has \"AzureFirewallApplicationRule\"\r\n    | where msg_s !has \"Allow\"\r\n    | parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePort \" to \" DestinationIP \":\" DestinationPort \". Action: \" Action \". Policy:\" Policy \". Rule Collection Group:\" RuleCollectionGroup \". Rule Collection: \" RuleCollection \". Rule Name: \" Rule;\r\nlet group3 = AzureDiagnostics\r\n    | where Category has \"AzureFirewallNetworkRule\"\r\n    | where msg_s !has \"Allow\"\r\n    | parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePort \" to \" DestinationIP \":\" DestinationPort \". Action: \" Action \". Policy:\" Policy \". Rule Collection Group:\" RuleCollectionGroup \". Rule Collection: \" RuleCollection \". Rule Name: \" Rule;\r\nunion group1, group2, group3\r\n| project Category, TimeGenerated, ResourceGroup, ruleName_s, type_s, direction_s, msg_s\r\n| summarize count() by Category",
+        "size": 0,
+        "title": "Azure Firewall Denies by log type",
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "query - 12"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "# Accounts Summary"
+            },
+            "name": "text - 0"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "## Number of User account created past month"
+            },
+            "customWidth": "25",
+            "name": "text - 1"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityEvent \r\n| where EventID == \"4720\"\r\n| where TimeGenerated > ago(30d)\r\n| count\r\n",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {
+                  "columnMatch": "Count",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal"
+                    }
+                  }
+                },
+                "showBorder": true,
+                "sortOrderField": 1,
+                "size": "auto"
+              }
+            },
+            "customWidth": "25",
+            "name": "query - 2"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "## Number of admin accounts created"
+            },
+            "customWidth": "25",
+            "name": "text - 3"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AuditLogs\r\n| where OperationName == \"Add member to role\" and AADOperationType == \"Assign\" and Result ==\"success\" and TimeGenerated > ago(30d)\r\n| mv-expand TargetResources\r\n| extend modifiedProperties = parse_json(TargetResources).modifiedProperties\r\n| mv-expand modifiedProperties\r\n| extend DisplayName = tostring(parse_json(modifiedProperties).displayName), GroupName = tostring(parse_json(modifiedProperties).newValue)\r\n| where GroupName == \"\\\"TenantAdmins\\\"\"\r\n| count\r\n",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {
+                  "columnMatch": "Count",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal"
+                    }
+                  }
+                },
+                "showBorder": true,
+                "size": "auto"
+              }
+            },
+            "customWidth": "25",
+            "name": "query - 4"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "## Number of user accounts removed"
+            },
+            "customWidth": "25",
+            "name": "text - 5"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityEvent \r\n| where EventID == \"4726\"\r\n| where TimeGenerated > ago(30d)\r\n| count\r\n",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {
+                  "columnMatch": "Count",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal"
+                    }
+                  }
+                },
+                "showBorder": true,
+                "size": "auto"
+              }
+            },
+            "customWidth": "25",
+            "name": "query - 6"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "## Number of admin accounts removed"
+            },
+            "customWidth": "25",
+            "name": "text - 7"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AuditLogs\r\n| where OperationName in ('Remove member from group', 'Remove owner from group') and TimeGenerated > ago(30d)\r\n| count\r\n",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {
+                  "columnMatch": "Count",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal"
+                    }
+                  }
+                },
+                "showBorder": true,
+                "size": "auto"
+              }
+            },
+            "customWidth": "25",
+            "name": "query - 8"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "## Number of accounts with permissions granted"
+            },
+            "customWidth": "25",
+            "name": "text - 9"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AuditLogs\r\n| where OperationName == \"Add member to role\" and AADOperationType == \"Assign\" and Result ==\"success\"\r\n| where TimeGenerated > ago(30d)\r\n| count\r\n",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {
+                  "columnMatch": "Count",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal"
+                    }
+                  }
+                },
+                "showBorder": true,
+                "size": "auto"
+              }
+            },
+            "customWidth": "25",
+            "name": "query - 10"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "## Number of accounts with permissions removed"
+            },
+            "customWidth": "25",
+            "name": "text - 11"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AuditLogs\r\n| where OperationName in ('Remove member from group') and TimeGenerated > ago(30d)\r\n| count\r\n",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {
+                  "columnMatch": "Count",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal"
+                    }
+                  }
+                },
+                "showBorder": true,
+                "size": "auto"
+              }
+            },
+            "customWidth": "25",
+            "name": "query - 12"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "## Number of account lockouts"
+            },
+            "customWidth": "25",
+            "name": "text - 13"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityEvent\r\n| where EventID == \"4740\" and TimeGenerated > ago(30d)\r\n| count\r\n",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {
+                  "columnMatch": "Count",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal"
+                    }
+                  }
+                },
+                "showBorder": true,
+                "size": "auto"
+              }
+            },
+            "customWidth": "25",
+            "name": "query - 14"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "## Number of accounts unlocked"
+            },
+            "customWidth": "25",
+            "name": "text - 15"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SecurityEvent\r\n| where EventID == \"4767\" and TimeGenerated > ago(30d)\r\n| count\r\n",
+              "size": 3,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "tiles",
+              "tileSettings": {
+                "titleContent": {
+                  "columnMatch": "Count",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "style": "decimal"
+                    }
+                  }
+                },
+                "showBorder": true,
+                "size": "auto"
+              }
+            },
+            "customWidth": "25",
+            "name": "query - 16"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SigninLogs\r\n| where TimeGenerated > ago(30d) and TimeGenerated < startofday(now())   \r\n| summarize Successful=countif(ResultType==0), Failed=countif(ResultType!=0) by Location",
+              "size": 3,
+              "title": "Failed logins by Geolocation",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "map",
+              "mapSettings": {
+                "locInfo": "CountryRegion",
+                "locInfoColumn": "Location",
+                "sizeSettings": "Failed",
+                "sizeAggregation": "Sum",
+                "labelSettings": "Location",
+                "legendMetric": "Failed",
+                "legendAggregation": "Sum",
+                "itemColorSettings": {
+                  "nodeColorField": "Location",
+                  "colorAggregation": "Count",
+                  "type": "heatmap",
+                  "heatmapPalette": "categorical"
+                }
+              }
+            },
+            "customWidth": "100",
+            "name": "query - 12"
+          }
+        ]
+      },
+      "name": "group - 11",
+      "styleSettings": {
+        "showBorder": true
+      }
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "# Notable Operations"
+            },
+            "name": "text - 0"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "AzureDiagnostics\r\n| where TimeGenerated > ago(30d)\r\n| where ResourceProvider == \"MICROSOFT.KEYVAULT\"\r\n| summarize count() by OperationName, ResultType",
+              "size": 3,
+              "title": "Keyvault Operations past month",
+              "noDataMessage": "There are no firewall events being feed within the selected workspaces. If you believe the selection is correct, confirm logging has been enabled for the Azure Firewall and feeding into the selected workspace. Reference Docs: https://docs.microsoft.com/azure/firewall/",
+              "noDataMessageStyle": 4,
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "crossComponentResources": [
+                "{Workspaces}"
+              ],
+              "visualization": "piechart",
+              "chartSettings": {
+                "yAxis": [
+                  "count_"
+                ]
+              }
+            },
+            "customWidth": "50",
+            "name": "Keyvault Operations by time"
+          },
+          {
+            "type": 12,
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## List of assets monitored"
+                  },
+                  "name": "text - 0"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "Heartbeat\r\n| where TimeGenerated > startofday(ago(30d))\r\n| summarize LastHeartbeat = max(TimeGenerated) by Computer, OSType, OSName\r\n| extend TimeFromNow = now() - LastHeartbeat\r\n| extend [\"TimeAgo\"] = strcat(toint(TimeFromNow / 1s), ' seconds')\r\n| project OSType\r\n| summarize count() by OSType",
+                    "size": 3,
+                    "title": "Monitored OS by type",
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "visualization": "piechart",
+                    "tileSettings": {
+                      "showBorder": false,
+                      "titleContent": {
+                        "columnMatch": "OSType",
+                        "formatter": 1
+                      },
+                      "leftContent": {
+                        "columnMatch": "count_",
+                        "formatter": 12,
+                        "formatOptions": {
+                          "palette": "auto"
+                        },
+                        "numberFormat": {
+                          "unit": 17,
+                          "options": {
+                            "maximumSignificantDigits": 3,
+                            "maximumFractionDigits": 2
+                          }
+                        }
+                      }
+                    },
+                    "graphSettings": {
+                      "type": 0,
+                      "topContent": {
+                        "columnMatch": "OSType",
+                        "formatter": 12,
+                        "formatOptions": {
+                          "palette": "green"
+                        }
+                      },
+                      "centerContent": {
+                        "columnMatch": "count_",
+                        "formatter": 1,
+                        "numberFormat": {
+                          "unit": 17,
+                          "options": {
+                            "maximumSignificantDigits": 3,
+                            "maximumFractionDigits": 2
+                          }
+                        }
+                      },
+                      "nodeIdField": "OSType",
+                      "sourceIdField": "OSType",
+                      "targetIdField": "count_",
+                      "graphOrientation": 3,
+                      "showOrientationToggles": false,
+                      "nodeSize": null,
+                      "staticNodeSize": 100,
+                      "colorSettings": null,
+                      "hivesMargin": 5
+                    },
+                    "chartSettings": {
+                      "xAxis": "OSType",
+                      "yAxis": [
+                        "count_"
+                      ]
+                    },
+                    "mapSettings": {
+                      "locInfo": "LatLong",
+                      "sizeSettings": "count_",
+                      "sizeAggregation": "Sum",
+                      "legendMetric": "count_",
+                      "legendAggregation": "Sum",
+                      "itemColorSettings": {
+                        "type": "heatmap",
+                        "colorAggregation": "Sum",
+                        "nodeColorField": "count_",
+                        "heatmapPalette": "greenRed"
+                      }
+                    }
+                  },
+                  "customWidth": "50",
+                  "name": "query - 2"
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "NetworkLogSrc_CL\r\n| where host_hostname_s contains \"PAN\"\r\n| distinct host_hostname_s",
+                    "size": 3,
+                    "title": "Monitored Firewalls",
+                    "noDataMessage": "No devices found",
+                    "noDataMessageStyle": 3,
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "visualization": "table",
+                    "gridSettings": {
+                      "labelSettings": [
+                        {
+                          "columnId": "host_hostname_s",
+                          "label": "Hostnames"
+                        }
+                      ]
+                    },
+                    "tileSettings": {
+                      "showBorder": false
+                    },
+                    "graphSettings": {
+                      "type": 2,
+                      "topContent": {
+                        "columnMatch": "host_hostname_s",
+                        "formatter": 1,
+                        "formatOptions": {
+                          "compositeBarSettings": {
+                            "labelText": "",
+                            "columnSettings": []
+                          }
+                        }
+                      },
+                      "hivesContent": {
+                        "columnMatch": "host_hostname_s",
+                        "formatter": 1
+                      },
+                      "nodeIdField": "host_hostname_s",
+                      "sourceIdField": "host_hostname_s",
+                      "targetIdField": "host_hostname_s",
+                      "graphOrientation": 3,
+                      "showOrientationToggles": false,
+                      "nodeSize": null,
+                      "staticNodeSize": 100,
+                      "colorSettings": null,
+                      "groupByField": "host_hostname_s",
+                      "hivesMargin": 5
+                    }
+                  },
+                  "customWidth": "50",
+                  "name": "query - 2",
+                  "styleSettings": {
+                    "showBorder": true
+                  }
+                }
+              ]
+            },
+            "customWidth": "50",
+            "name": "group - 16"
+          },
+          {
+            "type": 12,
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "union withsource = _TableName *\r\n| where 'All Tables' == 'All Tables' or _TableName == 'All Tables'\r\n| make-series TableSize = count() default = 0 on TimeGenerated from ago(7d) to now() step 3h\r\n| mvexpand TableSize to typeof(real), TimeGenerated to typeof(datetime) limit 1000\r\n| project TimeGenerated, ['All Tables'] = TableSize",
+                    "size": 0,
+                    "showAnalytics": true,
+                    "title": "{TimeRange:label}: number of events",
+                    "color": "green",
+                    "timeContextFromParameter": "TimeRange",
+                    "exportFieldName": "Namespace",
+                    "exportParameterName": "Namespace",
+                    "exportDefaultValue": "All",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "crossComponentResources": [
+                      "{Workspace}"
+                    ],
+                    "visualization": "areachart",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "Table Entries",
+                          "formatter": 3,
+                          "formatOptions": {
+                            "min": 0,
+                            "palette": "green",
+                            "showIcon": true
+                          },
+                          "numberFormat": {
+                            "unit": 17,
+                            "options": {
+                              "style": "decimal"
+                            }
+                          }
+                        },
+                        {
+                          "columnMatch": "Table Size",
+                          "formatter": 3,
+                          "formatOptions": {
+                            "min": 0,
+                            "palette": "blue",
+                            "showIcon": true
+                          },
+                          "numberFormat": {
+                            "unit": 2,
+                            "options": {
+                              "style": "decimal"
+                            }
+                          }
+                        },
+                        {
+                          "columnMatch": "Table Size Trend",
+                          "formatter": 9,
+                          "formatOptions": {
+                            "min": 0,
+                            "palette": "blue",
+                            "showIcon": true
+                          }
+                        }
+                      ],
+                      "filter": true
+                    }
+                  },
+                  "customWidth": "100",
+                  "name": "query - 6"
+                }
+              ]
+            },
+            "customWidth": "100",
+            "name": "group - workspaceInfo",
+            "styleSettings": {
+              "maxWidth": "400"
+            }
+          }
+        ]
+      },
+      "customWidth": "50",
+      "name": "group - 12",
+      "styleSettings": {
+        "showBorder": true
+      }
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "# Test Queries"
+            },
+            "name": "text - 0"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "_LogOperation\r\n| where TimeGenerated > ago(30d)\r\n| where Level !contains \"Info\"",
+              "size": 3,
+              "title": "Agent problems detected past 30 days",
+              "noDataMessage": "No agents reported problems",
+              "noDataMessageStyle": 3,
+              "timeContext": {
+                "durationMs": 86400000
+              },
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces"
+            },
+            "customWidth": "20",
+            "name": "query - 1"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "SigninLogs\r\n| extend errorCode_ = tostring(Status.errorCode)\r\n| where errorCode_ != \"0\"\r\n| project UserDisplayName, errorCode_, ResultDescription\r\n| summarize count() by UserDisplayName, errorCode_, ResultDescription\r\n| sort by count_ desc\r\n| take 10",
+              "size": 3,
+              "title": "Top 10 users with login failures",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table"
+            },
+            "customWidth": "40",
+            "name": "query - 2"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "let start_time=startofmonth(now());\r\nlet end_time=endofmonth(now());\r\nHeartbeat\r\n| where TimeGenerated > start_time and TimeGenerated < end_time\r\n| summarize heartbeat_per_hour=count() by bin_at(TimeGenerated, 1h, start_time), Computer\r\n| extend available_per_hour=iff(heartbeat_per_hour>0, true, false)\r\n| summarize Available_Hours=countif(available_per_hour==true) by Computer\r\n| extend Total_Hours=round((end_time-start_time)/1h)\r\n| extend Availability=Available_Hours*100/Total_Hours",
+              "size": 0,
+              "title": "Device Uptimes",
+              "timeContextFromParameter": "TimeRange",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "table",
+              "tileSettings": {
+                "showBorder": false,
+                "titleContent": {
+                  "columnMatch": "Computer",
+                  "formatter": 1
+                },
+                "leftContent": {
+                  "columnMatch": "Available_Hours",
+                  "formatter": 12,
+                  "formatOptions": {
+                    "palette": "auto"
+                  },
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "maximumSignificantDigits": 3,
+                      "maximumFractionDigits": 2
+                    }
+                  }
+                }
+              },
+              "graphSettings": {
+                "type": 0,
+                "topContent": {
+                  "columnMatch": "Computer",
+                  "formatter": 1
+                },
+                "centerContent": {
+                  "columnMatch": "Available_Hours",
+                  "formatter": 1,
+                  "numberFormat": {
+                    "unit": 17,
+                    "options": {
+                      "maximumSignificantDigits": 3,
+                      "maximumFractionDigits": 2
+                    }
+                  }
+                }
+              },
+              "mapSettings": {
+                "locInfo": "LatLong",
+                "sizeSettings": "Available_Hours",
+                "sizeAggregation": "Sum",
+                "legendMetric": "Available_Hours",
+                "legendAggregation": "Sum",
+                "itemColorSettings": {
+                  "type": "heatmap",
+                  "colorAggregation": "Sum",
+                  "nodeColorField": "Available_Hours",
+                  "heatmapPalette": "greenRed"
+                }
+              }
+            },
+            "customWidth": "40",
+            "name": "query - 3"
+          }
+        ]
+      },
+      "name": "group - 10",
+      "styleSettings": {
+        "showBorder": true
+      }
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/7d6ce827-8fa3-4e30-98b4-2d990eebd0a7/resourcegroups/rg-uks-mgmt-sec/providers/microsoft.operationalinsights/workspaces/log-uks-mgmt-sentinel"
+  ],
+  "fromTemplateId": "sentinel-UserWorkbook",
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
